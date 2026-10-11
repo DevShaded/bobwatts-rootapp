@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { RootServerException, RootServerExceptionType } from "@rootsdk/client-app";
 import {
   echoServiceClient,
   EchoServiceClientEvent,
@@ -22,8 +23,22 @@ const Echo: React.FC = () => {
       const request: EchoRequest = { message: inputText };
       const response: EchoResponse = await echoServiceClient.echo(request);
       setOutputText(response.message);
-    } catch {
-      setError("The message could not be sent. Check the connection and try again.");
+    } catch (error) {
+      let message = "The message could not be confirmed. Please try again later.";
+      if (error instanceof RootServerException) {
+        switch (error.code) {
+          case RootServerExceptionType.MessageTooLong:
+            message = "This message is too long. Shorten it and try again.";
+            break;
+          case RootServerExceptionType.RateLimitExceeded:
+            message = "The message limit was reached. Wait a moment before trying again, or shorten your message.";
+            break;
+          case RootServerExceptionType.RequestTimeout:
+            message = "The response timed out. Your message may have been sent.";
+            break;
+        }
+      }
+      setError(message);
     } finally {
       setSending(false);
     }
