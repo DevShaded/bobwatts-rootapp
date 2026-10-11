@@ -1,0 +1,6 @@
+{
+  "name": "@bobwatts-rootapp/networking",
+  "scripts": {
+    "build": "rootsdk build proto"
+  }
+}

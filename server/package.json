@@ -1,0 +1,9 @@
+{
+  "name": "@bobwatts-rootapp/server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "server": "rootsdk start devhost --project-folder=../"
+  }
+}

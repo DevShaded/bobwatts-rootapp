@@ -1,0 +1,32 @@
+{
+  "name": "@bobwatts-rootapp/app",
+  "description": "bobwatts-rootapp",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@rootsdk/client-app": "*",
+    "@rootsdk/server-app": "*",
+    "@bobwatts-rootapp/gen-client": "file:./networking/gen/client",
+    "@bobwatts-rootapp/gen-server": "file:./networking/gen/server",
+    "@bobwatts-rootapp/gen-shared": "file:./networking/gen/shared"
+  },
+  "devDependencies": {
+    "@rootsdk/dev-tools": "*",
+    "typescript": "^5.8.2",
+    "@types/node": "^22.10.2"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "clean": "node clean.js"
+  },
+  "workspaces": {
+    "packages": [
+      "./networking",
+      "./server",
+      "./client"
+    ]
+  }
+}
