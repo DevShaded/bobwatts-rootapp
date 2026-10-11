@@ -38,3 +38,13 @@ Native Root client keyboard, narrow-screen, and light/dark behavior also remain 
 The SDK types and inspected official documentation did not establish a numeric chat message-content limit. This slice does not impose the later ticket's greeting limit. Mention expansion can increase message size; any Root rejection is caught and logged under the agreed best-effort send policy. The 256 KiB application RPC limit is not assumed to be the chat message limit.
 
 Full greeting preview/validation, destination recovery, and save/delivery race coverage remain scoped to the subsequent slices in the parent issue.
+
+## Standards
+
+One review finding: destination discovery launched unbounded parallel requests across channel groups, contrary to the server skill's rate-limit guidance. Resolved by fetching one group at a time. No actionable baseline code smells were identified.
+
+## Spec
+
+No missing, incorrect, or out-of-scope implementation was identified for #4. The unavailable native Root client and human-join checks are recorded above, as the issue requires.
+
+Review totals: one Standards finding resolved; zero Spec findings.

@@ -3,7 +3,7 @@ import {
   RootServerException as SdkRootServerException, WellKnownRootGuids,
   type Client, type CommunityJoinedEvent, type RootServer, type ChannelGuid,
 } from "@rootsdk/server-app";
-import { WelcomeError, type WelcomeConfiguration } from "@bobwatts-rootapp/gen-shared";
+import { WelcomeError, type WelcomeConfiguration, type WelcomeDestination } from "@bobwatts-rootapp/gen-shared";
 import type { PrismaClient } from "../generated/prisma";
 
 type WelcomeApi = Pick<RootServer["community"], "communities" | "channelGroups" | "channels" | "communityMembers" | "communityRoles" | "channelMessages">;
@@ -91,13 +91,20 @@ export class Welcome {
     this.denyAccess();
   }
 
-  private async destinations() {
+  private async destinations(): Promise<WelcomeDestination[]> {
     const groups = await this.api.channelGroups.list();
-    const channels = (await Promise.all(groups.map((group) =>
-      this.api.channels.list({ channelGroupId: group.id })))).flat();
-    return channels.filter((channel) => channel.channelType === ChannelType.Text &&
-      channel.channelPermission.channelView && channel.channelPermission.channelCreateMessage)
-      .map((channel) => ({ id: channel.id, name: channel.name }));
+    const destinations: WelcomeDestination[] = [];
+    // Fetch one group at a time so larger communities do not burst Root API limits.
+    for (const group of groups) {
+      const channels = await this.api.channels.list({ channelGroupId: group.id });
+      for (const channel of channels) {
+        if (channel.channelType === ChannelType.Text && channel.channelPermission.channelView &&
+          channel.channelPermission.channelCreateMessage) {
+          destinations.push({ id: channel.id, name: channel.name });
+        }
+      }
+    }
+    return destinations;
   }
 
   private denyAccess(): never {
