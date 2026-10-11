@@ -91,7 +91,6 @@ body {
 }
 
 .sidebar-link:focus-visible,
-.dashboard-card:focus-visible,
 .dashboard-return:focus-visible {
   outline: 2px solid var(--foreground);
   outline-offset: 3px;
@@ -116,43 +115,11 @@ body {
 h1 { margin: var(--space-2) 0 var(--space-3); font-size: clamp(var(--text-2xl), 6vw, var(--text-3xl)); line-height: var(--leading-display); letter-spacing: var(--tracking-display); font-weight: 600; }
 h2 { margin: 0 0 var(--space-3); font-size: var(--text-sm); font-weight: 500; }
 
-.welcome-panel,
-.dashboard-card {
+.welcome-panel {
   padding: clamp(var(--space-5), 5vw, var(--space-8));
   border: 1px solid var(--border);
   border-radius: var(--radius-surface);
   background: var(--surface);
-}
-
-.dashboard-card {
-  display: block;
-  color: var(--foreground);
-  text-decoration: none;
-}
-
-.dashboard-card:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-muted);
-}
-
-.dashboard-card .eyebrow {
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-}
-
-.dashboard-card h2 {
-  margin-top: var(--space-3);
-  font-size: var(--text-lg);
-  font-weight: 600;
-}
-
-.dashboard-card p {
-  margin-bottom: var(--space-6);
-  color: var(--text-secondary);
-}
-
-.dashboard-card-action {
-  font-weight: 500;
 }
 
 .dashboard-return {

@@ -61,14 +61,7 @@ const App: React.FC = () => {
         </header>
         {isWelcome ? (
           <WelcomeSettings />
-        ) : isDashboard ? (
-          <a className="dashboard-card" href="/management/welcome">
-            <span className="eyebrow">Server management</span>
-            <h2>Welcome messages</h2>
-            <p>Choose a greeting and text channel for new members joining your community.</p>
-            <span className="dashboard-card-action">Open welcome settings</span>
-          </a>
-        ) : (
+        ) : isDashboard ? null : (
           <a className="dashboard-return" href="/">Go to dashboard</a>
         )}
       </main>

@@ -72,7 +72,7 @@ Prisma's CLI dependency `deepmerge-ts` is overridden to its patched version. Sch
 
 ## UI components
 
-The app opens the dashboard at `/`. Welcome configuration lives at `/management/welcome`, accessible from the Server management sidebar group or the dashboard.
+The app opens the dashboard at `/`. Welcome configuration lives at `/management/welcome`, accessible from the Server management sidebar group.
 
 Arc's foundation, button, input, textarea, and motion tokens live in `client/src/components/arc`. These are component source files from the official registry, using CSS modules and Motion. The editor's native checkbox and select use the same semantic tokens. Import the foundation once, and add components only as needed. The `@/*` alias resolves to `client/src`.
 
