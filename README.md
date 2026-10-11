@@ -117,6 +117,10 @@ docker compose run --rm --no-deps server node --test server/test/*.test.cjs
 
 ## Welcome settings
 
+For real join delivery, rendered mentions, and packaged navigation checks, use
+the [native Root verification checklist](docs/native-root-verification.md).
+For targeted SDK investigation, see [bounded SDK inspection](docs/agents/sdk-inspection.md).
+
 The community owner and members with Full Control or Manage Apps can open the editor. Every settings operation enforces that authority on the server using Root caller context. Only standard Text channels the app can view and create messages in are offered.
 
 Welcome messages start disabled with no destination and the greeting `Welcome {user}! Glad you’re here.`. Save commits the enabled state, destination, and greeting together; draft edits never change delivery. Enabling requires a writable destination and non-whitespace greeting. Disabling preserves the saved destination and greeting and permits incomplete fields.

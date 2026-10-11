@@ -31,6 +31,11 @@ The live checks exposed a compatibility issue in SDK 0.21.3: server RPC dispatch
 
 ## Checks still requiring the native Root client
 
+Use the [native verification checklist](native-root-verification.md) for access
+prerequisites, repeatable checks, and a dated evidence record including exact
+SDK and native client versions. No native run has been added by preparing this
+checklist; the gaps below remain open.
+
 No native Root client or additional human account was available in this session. A real human community join, the resulting message, the clickable/rendered user mention, and multiline/link rendering in the destination channel were not verified live. Join behavior and outgoing content were verified only through the fake Root API integration tests. DevHost client attachment was not treated as a community join.
 
 Native Root client keyboard, narrow-screen, and light/dark behavior also remain unverified; the editor checks above used the browser DevHost.
