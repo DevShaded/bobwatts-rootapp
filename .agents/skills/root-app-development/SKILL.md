@@ -71,6 +71,10 @@ user data; do not recommend blanket deletion as the default repair.
 
 Distinguish network restrictions from source-code or SDK failures.
 
+When inspecting installed SDK code, follow
+[bounded SDK inspection](../../../docs/agents/sdk-inspection.md): declarations
+first, then character-limited implementation excerpts.
+
 ## Local verification
 
 Use the starter connection example before adding features.
@@ -79,6 +83,10 @@ During development, the frontend runs in a browser and the backend uses
 Root DevHost. A valid token and connectivity to Root are still required.
 
 Explain which terminal and working directory each command needs.
+
+For native join delivery, rendered mentions, or packaged navigation, use the
+[native verification checklist](../../../docs/native-root-verification.md).
+Record client and SDK versions alongside evidence and unavailable checks.
 
 ## Release preparation
 
