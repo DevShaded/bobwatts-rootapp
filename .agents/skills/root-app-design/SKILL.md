@@ -1,84 +1,49 @@
 ---
 name: root-app-design
-description: Build, style, or review Root App frontends using Root's official design system. Use for Root dashboards, settings pages, forms, theme integration, responsive layouts, and UI consistency. Exclude text-only bots and unrelated websites.
+description: Build, style, or review this project's React frontend with Arc UI (uiarc.dev), including Root theme integration and responsive layouts. Use for components, forms, and visual consistency; exclude backend-only work.
 ---
 
-# Root App Design
+# Root App Design with Arc UI
 
-## Scope
+## Project choice
 
-Respect the requested mode:
-- For guidance requests, explain the steps without modifying files.
-- For implementation requests, make the requested changes.
-- Do not scaffold projects, install dependencies, or publish merely to answer a styling question.
+Use [Arc UI](https://uiarc.dev/) for components and visual styling. This is
+uiarc.dev, not Ark UI or arcui.dev. The frontend uses React and Vite.
+Root's SDK remains responsible for platform integration and networking;
+Root's component package and design-system colors are not the styling source.
 
-## Official references
+## Component work
 
-Read the relevant documentation before implementing:
+Inspect existing Arc components before adding another. Read the relevant
+[installation guide](https://uiarc.dev/docs/installation) and component page
+before importing new source. Verify requirements against the project's React
+version and installed types.
 
-- Design system:
-  https://docs.rootapp.com/docs/app-docs/develop/client/design-system-reference/
-- UI components:
-  https://docs.rootapp.com/docs/app-docs/develop/client/ui-components/
-- Theme handling:
-  https://docs.rootapp.com/docs/app-docs/develop/client/theme-mode/
+Arc distributes component source through its registry and manual installation
+instructions. Keep the source in the project, add only needed components and
+their dependencies, and preserve upstream comments. Do not assume a component
+is an export from an npm package named after Arc.
 
-Treat the documentation as evolving. Verify API exports against the installed package types.
+Use Arc's shared foundation, CSS modules, and semantic variables. Import the
+foundation once at the application entry point. Arc does not require Tailwind
+or Next.js; keep Vite and the existing CSS approach. Bundle assets locally when
+needed because Root's client runtime restricts network access.
 
-Distinguish between CSS examples and packaged components. Do not assume a documented pattern is an importable React component.
+## Theme integration
 
-If the documentation is unavailable, disclose that current details could not be verified.
+Use [Arc's theme tokens](https://uiarc.dev/docs/theming) for colors, typography,
+spacing, and shape. Follow Root's active light/dark mode by setting Arc's
+`data-theme` on the document element, while retaining Arc's palette.
 
-## Root styling conventions
+Read [Root's theme integration guide](https://docs.rootapp.com/docs/app-docs/develop/client/theme-mode/)
+when wiring theme detection. Check the installed SDK's exports and event types;
+documentation examples may differ from the installed version. Subscribe to
+theme changes and remove listeners during cleanup.
 
-- Use Root's injected `--rootsdk-` CSS color variables so the interface follows the active theme.
-- Default to 14px body text with 20px line height.
-- Use 500-weight headings.
-- Default to 12px corners for cards and inputs.
-- Keep spacing compact and consistent.
-- Use sentence-case section headings and uppercase secondary subgroup labels.
-- Prefer inline editing for simple existing items.
-- Use dialogs for complex selection or confirmation.
-- Make destructive icons visibly red before hover and confirm destructive actions.
-- Indicate selected cards with a brand-colored border.
-- Ensure layouts remain usable at 320px width.
+## Verification
 
-Consult the reference for exact tokens, component recipes, and exceptions.
-
-## Implementation workflow
-
-1. Inspect the existing components, styles, dependencies, and requested screen.
-
-2. Read the relevant reference sections for colors, spacing, typography,
-   component patterns, and responsive behavior.
-
-3. Reuse existing project abstractions. Create shared components when
-   multiple features need the same behavior or presentation.
-
-4. Keep styling changes separate from backend behavior. Preserve working
-   permissions, state handling, validation, and event subscriptions.
-
-5. Write valid CSS:
-   - Normalize malformed copied units such as `12 px` to `12px`.
-   - Do not assume a color variable contains raw RGB channels.
-   - Avoid overriding Root's injected theme variables globally.
-   - Keep any standalone preview theme isolated from production styling.
-
-6. Implement accessible behavior:
-   - Use semantic buttons, inputs, and labels.
-   - Provide accessible names for icon-only controls.
-   - Preserve visible keyboard focus and keyboard navigation.
-   - Make disabled, loading, and error states accurate.
-   - Treat accessibility as implementation work; CSS recipes do not
-     provide it automatically.
-
-7. Verify the changed interface:
-   - Light and dark themes.
-   - Narrow and wide layouts.
-   - Long labels and overflowing content.
-   - Loading, empty, success, and error states.
-   - Keyboard interaction.
-   - Available build and type checks when appropriate.
-
-8. Report what changed, what was verified, and remaining limitations.
-   Never claim visual or runtime checks that were not performed.
+Preserve existing service calls and event subscriptions while changing UI.
+Check keyboard operation, visible focus, labels, reduced motion, loading and
+error states, and long content. Verify light/dark themes and layouts down to
+320px, then run the relevant build and type checks. Report any runtime or visual
+checks that remain unverified.

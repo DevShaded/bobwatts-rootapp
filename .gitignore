@@ -5,6 +5,8 @@ build/
 coverage/
 *.tsbuildinfo
 /networking/gen/
+/server/generated/
+*.pkg
 
 # Local environment and development tokens
 .env
@@ -31,6 +33,9 @@ tokens.*
 *_token.*
 *-tokens.*
 *_tokens.*
+# Arc UI animation constants are source code, not credentials.
+!/client/src/components/arc/motion-tokens.ts
+!/client/src/components/arc/lib/motion-tokens.ts
 dev-token*
 dev_token*
 secret

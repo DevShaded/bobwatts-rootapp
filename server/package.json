@@ -3,7 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc",
-    "server": "rootsdk start devhost --project-folder=../"
+    "build": "npm run db:generate && tsc",
+    "server": "rootsdk start devhost --project-folder=../",
+    "dev": "concurrently --kill-others --names typescript,devhost \"tsc-watch --onSuccess 'node ../scripts/reload-server.cjs'\" \"npm run server\"",
+    "db:generate": "prisma generate --allow-no-models",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3"
+  },
+  "devDependencies": {
+    "prisma": "6.19.3"
   }
 }
