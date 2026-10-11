@@ -9,12 +9,19 @@
       "launch": "server/dist/main.js",
       "deploy": [
         "server/dist",
+        "server/prisma/migrations",
         "networking/gen/server",
         "server/generated/prisma"
       ],
       "nodeModules": [
         "node_modules"
       ]
+    }
+  },
+  "permissions": {
+    "channel": {
+      "createMessage": true,
+      "createMessageMention": true
     }
   }
 }

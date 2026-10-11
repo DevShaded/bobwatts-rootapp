@@ -22,15 +22,23 @@ body {
 h1 { margin: var(--space-2) 0 var(--space-3); font-size: clamp(var(--text-2xl), 6vw, var(--text-3xl)); line-height: var(--leading-display); letter-spacing: var(--tracking-display); font-weight: 600; }
 h2 { margin: 0 0 var(--space-3); font-size: var(--text-sm); font-weight: 500; }
 
-.echo-panel {
+.welcome-panel {
   padding: clamp(var(--space-5), 5vw, var(--space-8));
   border: 1px solid var(--border);
   border-radius: var(--radius-surface);
   background: var(--surface);
 }
 
-.echo-form { display: grid; gap: var(--space-4); }
-.echo-form > button { justify-self: start; }
-.echo-result { margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--border); }
-.echo-result p { margin: 0; color: var(--text-secondary); white-space: pre-wrap; overflow-wrap: anywhere; }
+.welcome-form { display: grid; gap: var(--space-5); }
+.welcome-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: var(--space-4); }
+.enabled-field { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.enabled-field label, .destination-field label { font-weight: 500; }
+.enabled-field input { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: var(--foreground); }
+.field-help { margin: 0; color: var(--text-muted); font-size: var(--text-xs); }
+.destination-field { display: grid; gap: var(--space-2); }
+.destination-field select { width: 100%; min-width: 0; min-height: var(--control-height-md); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface); color: var(--foreground); font: inherit; }
+.destination-field select:focus-visible, .enabled-field input:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.save-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+.save-status { margin: 0; color: var(--text-secondary); overflow-wrap: anywhere; }
+.save-status:empty { display: none; }
 .error-message { color: var(--danger); }

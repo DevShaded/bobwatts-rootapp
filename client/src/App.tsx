@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { rootClient, type RootThemeMode } from "@rootsdk/client-app";
-import Echo from "./Example";
+import WelcomeSettings from "./WelcomeSettings";
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -18,10 +18,10 @@ const App: React.FC = () => {
     <main className="app-shell">
       <header className="app-heading">
         <p className="eyebrow">Bob Watts</p>
-        <h1>Echo playground</h1>
-        <p>Send a message and see it return. Other connected clients receive it too.</p>
+        <h1>Welcome messages</h1>
+        <p>Give new members a warm welcome with a greeting in your community.</p>
       </header>
-      <Echo />
+      <WelcomeSettings />
     </main>
   );
 };
