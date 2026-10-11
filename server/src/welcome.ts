@@ -5,6 +5,7 @@ import {
 } from "@rootsdk/server-app";
 import { WelcomeError, type WelcomeConfiguration, type WelcomeDestination } from "@bobwatts-rootapp/gen-shared";
 import type { PrismaClient } from "../generated/prisma";
+import { renderWelcomeGreeting, welcomeGreetingProblem } from "./welcomeGreeting";
 
 type WelcomeApi = Pick<RootServer["community"], "communities" | "channelGroups" | "channels" | "communityMembers" | "communityRoles" | "channelMessages">;
 
@@ -22,9 +23,11 @@ export class Welcome {
 
   async loadEditor(client: Client) {
     await this.requireAdministrator(client);
+    const member = await this.api.communityMembers.get({ userId: client.userId });
     return {
       configuration: await this.configuration(),
       destinations: await this.destinations(),
+      previewMember: { userId: client.userId, nickname: member.nickname },
     };
   }
 
@@ -34,12 +37,7 @@ export class Welcome {
       const configuration = await this.configuration();
       if (!configuration.enabled || !configuration.destinationId) return;
       const member = await this.api.communityMembers.get({ userId: event.userId });
-      // Escape only member-controlled text, keeping the administrator's greeting intact.
-      const displayText = member.nickname
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        .replace(/[\\`*_[\]{}()!~|]/g, "\\$&").replace(/[\r\n\t]/g, " ");
-      const mention = `[@${displayText}](root://user/${event.userId})`;
-      const content = configuration.greeting.split("{user}").join(mention);
+      const content = renderWelcomeGreeting(configuration.greeting, { userId: event.userId, nickname: member.nickname });
       await this.api.channelMessages.create({ channelId: configuration.destinationId as ChannelGuid, content });
     } catch (error) {
       this.logger.error("Welcome message could not be sent.", { communityId: event.communityId, userId: event.userId, error });
@@ -49,9 +47,8 @@ export class Welcome {
   async save(configuration: WelcomeConfiguration, client: Client): Promise<WelcomeConfiguration> {
     await this.requireAdministrator(client);
     if (configuration.enabled) {
-      if (!configuration.greeting.trim()) {
-        throw new RootServerException(WelcomeError.INVALID_CONFIGURATION, "Enter a welcome greeting before enabling welcome messages.");
-      }
+      const problem = welcomeGreetingProblem(configuration.greeting);
+      if (problem) throw new RootServerException(WelcomeError.INVALID_CONFIGURATION, problem);
       const destinations = await this.destinations();
       if (!destinations.some((destination) => destination.id === configuration.destinationId)) {
         throw new RootServerException(WelcomeError.INVALID_CONFIGURATION, "Choose a text channel the app can view and post in before enabling welcome messages.");

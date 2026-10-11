@@ -19,9 +19,15 @@ message WelcomeDestination {
   string name = 2;
 }
 
+message WelcomePreviewMember {
+  string user_id = 1;
+  string nickname = 2;
+}
+
 message WelcomeEditorState {
   WelcomeConfiguration configuration = 1;
   repeated WelcomeDestination destinations = 2;
+  WelcomePreviewMember preview_member = 3;
 }
 
 service WelcomeService {

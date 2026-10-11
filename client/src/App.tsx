@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { rootClient, type RootThemeMode } from "@rootsdk/client-app";
-import WelcomeSettings from "./WelcomeSettings";
+const WelcomeSettings = lazy(() => import("./WelcomeSettings"));
 
 const App: React.FC = () => {
   const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -60,7 +60,9 @@ const App: React.FC = () => {
           <p>{isDashboard ? "Manage your community with Bob Watts." : isWelcome ? "Give new members a warm welcome with a greeting in your community." : "This page does not exist."}</p>
         </header>
         {isWelcome ? (
-          <WelcomeSettings />
+          <Suspense fallback={<p role="status">Loading welcome settings…</p>}>
+            <WelcomeSettings />
+          </Suspense>
         ) : isDashboard ? null : (
           <a className="dashboard-return" href="/">Go to dashboard</a>
         )}
