@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { rootClient, type RootThemeMode } from "@rootsdk/client-app";
-import { Button } from "./components/arc/button/button";
 import WelcomeSettings from "./WelcomeSettings";
 
 const App: React.FC = () => {
-  const welcomeHeading = useRef<HTMLHeadingElement>(null);
+  const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+  const isDashboard = pathname === "/";
+  const isWelcome = pathname === "/management/welcome";
   useEffect(() => {
     const updateTheme = (theme: RootThemeMode) => {
       document.documentElement.dataset.theme = theme;
@@ -27,32 +28,49 @@ const App: React.FC = () => {
           </div>
         </div>
         <nav aria-label="App navigation">
+          <a href="/" className="sidebar-link sidebar-dashboard" aria-current={isDashboard ? "page" : undefined}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="2" />
+              <rect x="14" y="3" width="7" height="7" rx="2" />
+              <rect x="3" y="14" width="7" height="7" rx="2" />
+              <rect x="14" y="14" width="7" height="7" rx="2" />
+            </svg>
+            Dashboard
+          </a>
           <h2 id="server-management-group" className="sidebar-group-heading">Server management</h2>
           <div role="group" aria-labelledby="server-management-group">
-            <Button
-              type="button"
-              variant="ghost"
+            <a
+              href="/management/welcome"
               className="sidebar-link"
-              aria-current="page"
-              aria-controls="welcome-page"
-              onClick={() => welcomeHeading.current?.focus()}
+              aria-current={isWelcome ? "page" : undefined}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="3" />
                 <path d="m3 7 9 6 9-6" />
               </svg>
               Welcome
-            </Button>
+            </a>
           </div>
         </nav>
       </aside>
-      <main id="welcome-page" className="app-shell" aria-labelledby="welcome-heading">
+      <main className="app-shell" aria-labelledby="page-heading">
         <header className="app-heading">
-          <p className="eyebrow">Server management</p>
-          <h1 id="welcome-heading" ref={welcomeHeading} tabIndex={-1}>Welcome messages</h1>
-          <p>Give new members a warm welcome with a greeting in your community.</p>
+          <p className="eyebrow">{isWelcome ? "Server management" : "Bob Watts"}</p>
+          <h1 id="page-heading">{isDashboard ? "Dashboard" : isWelcome ? "Welcome messages" : "Page not found"}</h1>
+          <p>{isDashboard ? "Manage your community with Bob Watts." : isWelcome ? "Give new members a warm welcome with a greeting in your community." : "This page does not exist."}</p>
         </header>
-        <WelcomeSettings />
+        {isWelcome ? (
+          <WelcomeSettings />
+        ) : isDashboard ? (
+          <a className="dashboard-card" href="/management/welcome">
+            <span className="eyebrow">Server management</span>
+            <h2>Welcome messages</h2>
+            <p>Choose a greeting and text channel for new members joining your community.</p>
+            <span className="dashboard-card-action">Open welcome settings</span>
+          </a>
+        ) : (
+          <a className="dashboard-return" href="/">Go to dashboard</a>
+        )}
       </main>
     </div>
   );

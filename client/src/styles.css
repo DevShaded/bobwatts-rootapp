@@ -62,19 +62,44 @@ body {
   padding-inline: var(--space-3);
 }
 
-.app-sidebar .sidebar-link {
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   width: 100%;
-  justify-content: flex-start;
+  min-height: var(--control-height-md);
   padding-inline: var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+}
+
+.sidebar-dashboard {
+  margin-bottom: var(--space-6);
+}
+
+.sidebar-link[aria-current="page"] {
   color: var(--foreground);
   border-color: var(--border);
   background: var(--surface-muted);
 }
 
 .sidebar-link:focus-visible,
-#welcome-heading:focus-visible {
+.dashboard-card:focus-visible,
+.dashboard-return:focus-visible {
   outline: 2px solid var(--foreground);
   outline-offset: 3px;
+}
+
+.sidebar-link:hover {
+  color: var(--foreground);
+  background: var(--surface-muted);
 }
 
 .app-shell {
@@ -91,11 +116,47 @@ body {
 h1 { margin: var(--space-2) 0 var(--space-3); font-size: clamp(var(--text-2xl), 6vw, var(--text-3xl)); line-height: var(--leading-display); letter-spacing: var(--tracking-display); font-weight: 600; }
 h2 { margin: 0 0 var(--space-3); font-size: var(--text-sm); font-weight: 500; }
 
-.welcome-panel {
+.welcome-panel,
+.dashboard-card {
   padding: clamp(var(--space-5), 5vw, var(--space-8));
   border: 1px solid var(--border);
   border-radius: var(--radius-surface);
   background: var(--surface);
+}
+
+.dashboard-card {
+  display: block;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.dashboard-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.dashboard-card .eyebrow {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.dashboard-card h2 {
+  margin-top: var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.dashboard-card p {
+  margin-bottom: var(--space-6);
+  color: var(--text-secondary);
+}
+
+.dashboard-card-action {
+  font-weight: 500;
+}
+
+.dashboard-return {
+  color: var(--foreground);
 }
 
 .welcome-form { display: grid; gap: var(--space-5); }
