@@ -98,6 +98,14 @@ Without Docker, Vite defaults to port 5173 and DevHost to 8080–8082. If you cu
 
 ## Checks and packaging
 
+[GitHub Actions](.github/workflows/build.yml) runs `npm ci` and `npm run build`
+from a clean checkout on pull requests and pushes to `main`, using the Node
+version in `.nvmrc`. This generates networking and Prisma code, checks
+TypeScript, and builds the client. The workflow runs no integration tests and
+requires no Root development token.
+
+Optional local checks:
+
 ```bash
 npm test
 docker compose run --rm --no-deps server node --test server/test/*.test.cjs
