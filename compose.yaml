@@ -1,0 +1,45 @@
+x-development: &development
+  image: bobwatts-rootapp-dev
+  build: .
+  platform: linux/amd64
+  init: true
+
+services:
+  server:
+    <<: *development
+    command: npm run dev --workspace=server
+    env_file: server/.env
+    environment:
+      DATABASE_CONFIG: '{"databaseType":"sqlite3","sqlite3":{"filename":"/data/rootsdk.sqlite3"}}'
+      ROOT_DEV_WS_PORT: ${ROOT_DEV_WS_PORT:-8180}
+      ROOT_DEV_HTTP_PORT: ${ROOT_DEV_HTTP_PORT:-8181}
+      ROOT_DEV_WS_UPDATE_PORT: ${ROOT_DEV_WS_UPDATE_PORT:-8182}
+    ports:
+      - "${DEV_BIND_ADDRESS:-127.0.0.1}:${ROOT_DEV_WS_PORT:-8180}:${ROOT_DEV_WS_PORT:-8180}"
+      - "${DEV_BIND_ADDRESS:-127.0.0.1}:${ROOT_DEV_HTTP_PORT:-8181}:${ROOT_DEV_HTTP_PORT:-8181}"
+      - "${DEV_BIND_ADDRESS:-127.0.0.1}:${ROOT_DEV_WS_UPDATE_PORT:-8182}:${ROOT_DEV_WS_UPDATE_PORT:-8182}"
+    volumes:
+      - ./server/src:/app/server/src:ro
+      - sqlite-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=require('node:net').connect(Number(process.env.ROOT_DEV_WS_PORT),'127.0.0.1',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1));setTimeout(()=>process.exit(1),2000)"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+
+  client:
+    <<: *development
+    command: npm run dev --workspace=client
+    environment:
+      VITE_ROOT_DEV_WS_PORT: ${ROOT_DEV_WS_PORT:-8180}
+      VITE_ROOT_DEV_HTTP_PORT: ${ROOT_DEV_HTTP_PORT:-8181}
+      VITE_ROOT_DEV_WS_UPDATE_PORT: ${ROOT_DEV_WS_UPDATE_PORT:-8182}
+      __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: ${DEV_ALLOWED_HOST:-localhost}
+    ports:
+      - "${DEV_BIND_ADDRESS:-127.0.0.1}:${CLIENT_PORT:-5174}:5173"
+    volumes:
+      - ./client/src:/app/client/src:ro
+
+volumes:
+  sqlite-data:

@@ -1,0 +1,14 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  // Migration authoring uses a separate database; runtime overrides this with Root's filename.
+  url      = "file:./development.sqlite3"
+}
+
+// Add application models here when their requirements are defined.
+// Root owns its internal tables; do not model or migrate those tables.

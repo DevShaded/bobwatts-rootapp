@@ -7,8 +7,14 @@
     },
     "server": {
       "launch": "server/dist/main.js",
-      "deploy": ["server/dist", "networking/gen/server"],
-      "nodeModules": ["node_modules"]
+      "deploy": [
+        "server/dist",
+        "networking/gen/server",
+        "server/generated/prisma"
+      ],
+      "nodeModules": [
+        "node_modules"
+      ]
     }
   }
 }

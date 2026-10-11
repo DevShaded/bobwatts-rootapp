@@ -7,20 +7,23 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@rootsdk/client-app": "*",
-    "@rootsdk/server-app": "*",
     "@bobwatts-rootapp/gen-client": "file:./networking/gen/client",
     "@bobwatts-rootapp/gen-server": "file:./networking/gen/server",
-    "@bobwatts-rootapp/gen-shared": "file:./networking/gen/shared"
+    "@bobwatts-rootapp/gen-shared": "file:./networking/gen/shared",
+    "@rootsdk/client-app": "*",
+    "@rootsdk/server-app": "*"
   },
   "devDependencies": {
     "@rootsdk/dev-tools": "*",
-    "typescript": "^5.8.2",
-    "@types/node": "^22.10.2"
+    "@types/node": "^22.10.2",
+    "concurrently": "10.0.6",
+    "tsc-watch": "7.2.1",
+    "typescript": "^5.8.2"
   },
   "scripts": {
     "build": "npm run build --workspaces",
-    "clean": "node clean.js"
+    "clean": "node clean.js",
+    "test": "npm run build && node --test server/test/*.test.cjs"
   },
   "workspaces": {
     "packages": [
@@ -28,5 +31,10 @@
       "./server",
       "./client"
     ]
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    }
   }
 }

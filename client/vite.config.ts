@@ -1,34 +1,28 @@
-import { defineConfig, type Plugin } from "vite";
+import { fileURLToPath, URL } from "node:url";
+import { defineConfig } from "vite";
 import checker from "vite-plugin-checker";
 import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // DevHost ports can differ per project; the packaged client uses Root's native bridge.
+  define: command === "serve" ? {
+    "window.__rootDevConfig": JSON.stringify({
+      wsPort: Number(process.env.VITE_ROOT_DEV_WS_PORT || 8080),
+      httpPort: Number(process.env.VITE_ROOT_DEV_HTTP_PORT || 8081),
+      wsUpdatePort: Number(process.env.VITE_ROOT_DEV_WS_UPDATE_PORT || 8082),
+    }),
+  } : {},
   server: {
-    open: true,
+    host: "0.0.0.0",
+    port: 5173,
+    strictPort: true,
   },
-  plugins: [react(), hotReload(), checker({ typescript: true })],
-});
-
-function hotReload(): Plugin {
-  return {
-    name: "hotreload-hmr",
-    enforce: "post",
-    // HMR
-    handleHotUpdate({ file, server }) {
-      console.log(file);
-      if (
-        file.endsWith(".json") ||
-        file.endsWith(".tsx") ||
-        file.endsWith(".ts")
-      ) {
-        console.log("reloading...");
-
-        server.ws.send({
-          type: "full-reload",
-          path: "*",
-        });
-      }
-    },
-  };
-}
+  resolve: {
+    // Hoisted Motion dependencies must use the client's React instance.
+    dedupe: ["react", "react-dom"],
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+  },
+  // HMR
+  plugins: [react(), checker({ typescript: true })],
+}));
