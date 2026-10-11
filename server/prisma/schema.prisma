@@ -12,3 +12,11 @@ datasource db {
 
 // Add application models here when their requirements are defined.
 // Root owns its internal tables; do not model or migrate those tables.
+model WelcomeConfiguration {
+  id            Int     @id @default(1)
+  enabled       Boolean @default(false)
+  destinationId String?
+  greeting      String  @default("Welcome {user}! Glad you’re here.")
+
+  @@map("bobwatts_welcome_configuration")
+}

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+import "rootsdk/types.proto";
+
+enum WelcomeError {
+  WELCOME_ERROR_UNSPECIFIED = 0;
+  WELCOME_ERROR_ACCESS_DENIED = 1;
+  WELCOME_ERROR_INVALID_CONFIGURATION = 2;
+}
+
+message WelcomeConfiguration {
+  bool enabled = 1;
+  optional string destination_id = 2;
+  string greeting = 3;
+}
+
+message WelcomeDestination {
+  string id = 1;
+  string name = 2;
+}
+
+message WelcomeEditorState {
+  WelcomeConfiguration configuration = 1;
+  repeated WelcomeDestination destinations = 2;
+}
+
+service WelcomeService {
+  rpc LoadEditor(rootsdk.Void) returns (WelcomeEditorState);
+  rpc Save(WelcomeConfiguration) returns (WelcomeConfiguration);
+}

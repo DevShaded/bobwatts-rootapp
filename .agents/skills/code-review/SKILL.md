@@ -59,6 +59,24 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 Issue both sub-agent calls together, in the foreground, and aggregate the reports they return.
 
+Give both reviewers the evidence requirements below. For SDK implementation
+questions, follow [bounded SDK inspection](../../../docs/agents/sdk-inspection.md).
+
+#### Evidence requirements
+
+Before presenting a behavioral defect, identify the changed code, triggering
+condition, observed or supported consequence, and requirement it violates.
+Compare claims about SDK behavior with the installed version and relevant
+official references. Reconcile conflicting sources before calling a candidate
+a defect, including in progress updates. An unresolved contradiction belongs
+under verification gaps, with both sources and the evidence needed to resolve
+it; it does not count as a confirmed finding. Keep documented-standard findings
+and judgment-based smells labeled as such.
+
+For native Root behavior that cannot be established through local tests, use
+the [native verification checklist](../../../docs/native-root-verification.md)
+and report unavailable checks explicitly.
+
 **Standards sub-agent prompt** should include:
 
 - The full diff command and commit list.
