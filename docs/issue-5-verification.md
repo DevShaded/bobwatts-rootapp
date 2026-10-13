@@ -58,3 +58,23 @@ Independent review found no documented-standard violations or actionable baselin
 ## Spec
 
 Independent review found no confirmed defects or scope creep. Two verification gaps remain: native Root delivery/rendering and exact platform enforcement of expanded app-created message length, documented above.
+
+## Review follow-up: 2026-10-13
+
+A subsequent review found two issues: inline Markdown component definitions remounted preview descendants on form updates, and raw placeholder expansion inside code or custom links could corrupt the preview. Both are addressed on the same feature branch.
+
+Preview component types and their mapping now live at module scope. Placeholder placement is checked with a CommonMark token parser shared between client and server. An enabled greeting must place every `{user}` in ordinary text outside code, links, images, and HTML tokens; a second syntax check rejects escapes or punctuation that would turn the inserted mention into literal text or an image. This check uses parsing only, not HTML execution. The [Markdown-It token architecture](https://github.com/markdown-it/markdown-it/blob/master/docs/architecture.md) documents the distinction between text, links, code, and inline containers. Markdown-It is available as CommonJS for the existing server build.
+
+The editor displays specific placement feedback and preserves the original Markdown without injecting member text into an invalid preview. Disabled saves still retain invalid greeting content and the destination. A legacy enabled configuration with unsafe placement is preserved, but each affected join logs and skips delivery rather than posting broken content. Normal formatting and links elsewhere in the greeting remain supported.
+
+Added public-interface SQLite/fake Root regression scenarios cover enabled rejection and unchanged active settings for inline/fenced/indented code, link labels/destinations/reference links, images, and escaped placeholders; permitted disabled retention; ordinary-text mentions surrounded by bold, code, links, and spoilers with a backtick-containing member name; and safe handling of a legacy invalid enabled configuration.
+
+T3 Code collaborative browser verification used a temporary editor fixture with a fake RPC boundary and a controlled pending Save. It confirmed that the same spoiler DOM node remained connected and focused after Save completion, a member name containing a backtick and Markdown delimiters remained literal inside a valid mention, code placeholders remained literal in invalid previews, custom links retained their text and destination, enabled invalid Save sent no request, and disabled invalid Save preserved the greeting and destination. No live configuration or channel message was changed. The temporary fixture and its development server were removed after verification. These checks do not replace native Root verification.
+
+Review extended the regressions to entity-normalized link destinations and bare WWW URLs, including unknown domains and entity spellings such as `&nbsp;`. Probe destinations exclude existing parsed links so an encoded link cannot supply a false mention count. GFM's broader WWW recognition is handled conservatively: separate placeholders from bare URL text with an ordinary space, tab, or line break. Validation preserves entity spellings so they cannot impersonate those source separators. Normal whitespace-separated URLs and mentions remain permitted.
+
+Markdown-It 15.0.2 supplies its own declarations; adding the older DefinitelyTyped declarations caused a protobuf-generation type error, so those redundant declarations were removed. Native Root rendering and expanded-content length enforcement remain unverified.
+
+Final review: zero remaining Standards findings and zero remaining Spec findings. The Spec reviewer exercised 40 public Save/delivery scenarios against temporary SQLite and actual React/GFM rendering: 21 accepted, 19 rejected, and no preview mention mismatches. `npm test` passes all 22 integration tests and the complete generated-code/production build; Prisma validation and `git diff --check` pass.
+
+The final Docker rebuild also passes, preserves the existing SQLite volume, and leaves the development services healthy. All 22 integration tests pass inside the Alpine server container. The collaborative browser was returned to the rebuilt app's dashboard after the temporary fixture checks.

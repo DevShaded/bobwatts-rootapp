@@ -2,16 +2,27 @@ import { useEffect, useState } from "react";
 import { RootServerException } from "@rootsdk/client-app";
 import { welcomeServiceClient } from "@bobwatts-rootapp/gen-client";
 import { WelcomeError, type WelcomeConfiguration, type WelcomeDestination, type WelcomePreviewMember } from "@bobwatts-rootapp/gen-shared";
-import Markdown, { defaultUrlTransform } from "react-markdown";
+import Markdown, { defaultUrlTransform, type Components, type Options } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import { spoilerPlugin } from "remark-inline-spoiler";
 import type {} from "mdast-util-inline-spoiler";
 import { Button } from "@/components/arc/button/button";
 import { Textarea } from "@/components/arc/textarea/textarea";
-import { renderWelcomeGreeting, welcomeGreetingProblem, WELCOME_GREETING_LIMIT } from "../../server/src/welcomeGreeting";
+import { renderWelcomeGreeting, welcomeGreetingContextProblem, welcomeGreetingProblem, WELCOME_GREETING_LIMIT } from "../../server/src/welcomeGreeting";
 
 const previewPlugins = [remarkGfm, remarkBreaks, spoilerPlugin];
+const previewMarkdownOptions: Options["remarkRehypeOptions"] = { handlers: {
+  // Root's spoiler syntax is parsed as its own node, including nested formatting.
+  spoiler: (state, node) => ({ type: "element", tagName: "span", properties: { className: ["preview-spoiler"] }, children: state.all(node) }),
+} };
+const previewComponents: Components = {
+  span: ({ className, children }) => <span className={className} tabIndex={className === "preview-spoiler" ? 0 : undefined}
+    title={className === "preview-spoiler" ? "Spoiler: hover or focus to reveal" : undefined}>{children}</span>,
+  a: ({ href, children }) => href?.startsWith("root://user/")
+    ? <span className="preview-mention">{children}</span>
+    : <a href={href} target="_blank" rel="noreferrer">{children}</a>,
+};
 
 export default function WelcomeSettings() {
   const [draft, setDraft] = useState<WelcomeConfiguration | null>(null);
@@ -105,7 +116,8 @@ export default function WelcomeSettings() {
   const missingDestination = draft.destinationId && !destinations.some((destination) => destination.id === draft.destinationId);
   const greetingProblem = welcomeGreetingProblem(draft.greeting);
   const greetingLength = Array.from(draft.greeting).length;
-  const previewContent = renderWelcomeGreeting(draft.greeting, previewMember);
+  const contextProblem = welcomeGreetingContextProblem(draft.greeting);
+  const previewContent = contextProblem ? draft.greeting : renderWelcomeGreeting(draft.greeting, previewMember);
   return (
     <section className="welcome-panel" aria-label="Welcome settings">
       <form className="welcome-form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
@@ -150,20 +162,12 @@ export default function WelcomeSettings() {
         <section className="greeting-preview" aria-labelledby="preview-heading">
           <h2 id="preview-heading">Draft preview</h2>
           <p className="field-help">Uses you as the example member. Previewing does not save or send a message.</p>
+          {contextProblem ? <p className="error-message" role="status">{contextProblem} This preview keeps {"{user}"} literal until you fix its placement.</p> : null}
           <div className="preview-content">
             {draft.greeting.trim() ? <Markdown remarkPlugins={previewPlugins} disallowedElements={["img"]}
-              remarkRehypeOptions={{ handlers: {
-                // Root's spoiler syntax is parsed as its own node, including nested formatting.
-                spoiler: (state, node) => ({ type: "element", tagName: "span", properties: { className: ["preview-spoiler"] }, children: state.all(node) }),
-              } }}
+              remarkRehypeOptions={previewMarkdownOptions}
               urlTransform={(url) => url.startsWith("root://user/") ? url : defaultUrlTransform(url)}
-              components={{
-                span: ({ className, children }) => <span className={className} tabIndex={className === "preview-spoiler" ? 0 : undefined}
-                  title={className === "preview-spoiler" ? "Spoiler: hover or focus to reveal" : undefined}>{children}</span>,
-                a: ({ href, children }) => href?.startsWith("root://user/")
-                  ? <span className="preview-mention">{children}</span>
-                  : <a href={href} target="_blank" rel="noreferrer">{children}</a>,
-              }}>{previewContent}</Markdown> : <p className="field-help">Enter a greeting to see its preview.</p>}
+              components={previewComponents}>{previewContent}</Markdown> : <p className="field-help">Enter a greeting to see its preview.</p>}
           </div>
         </section>
         <div className="save-row">

@@ -309,3 +309,73 @@ test("Root rejection after mention expansion is logged without retries or config
   assert.equal(failures.length, 1);
   assert.deepEqual((await welcome.loadEditor(owner)).configuration, saved);
 });
+
+test("enabled saves reject user placeholders in code or links while disabled drafts remain intact", async (t) => {
+  const { welcome, messages } = await setup(t);
+  const saved = { enabled: true, destinationId: "welcome-channel", greeting: "Welcome {user}!" };
+  await welcome.save(saved, owner);
+  for (const greeting of [
+    "Hello `{user}`!",
+    "```text\n{user}\n```",
+    "    {user}",
+    "[Hello {user}](https://example.com)",
+    "[Read more](https://example.com/{user})",
+    "[Hello {user}][guide]\n\n[guide]: https://example.com",
+    "![Hello {user}](https://example.com/image.png)",
+    "\\{user}",
+    "!{user}",
+    "[x](root://user/welcome&#45;placeholder) !{user}",
+    "www.example.com/{user}",
+    "www.example.com/[{user}]",
+    "www.example.com/**{user}**",
+    "www.example.invalid/{user}",
+    "www.example.test/{user}",
+    "www.localhost/{user}",
+    "www.localhost/**{user}**",
+    "www.example.invalid/&nbsp;{user}",
+    "www.localhost/&#32;{user}",
+  ]) {
+    await assert.rejects(welcome.save({ ...saved, greeting }, owner), {
+      code: WelcomeError.INVALID_CONFIGURATION, message: /Place \{user\} in ordinary greeting text/,
+    }, greeting);
+    assert.deepEqual((await welcome.loadEditor(owner)).configuration, saved);
+  }
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, [{ channelId: "welcome-channel", content: `Welcome [@Alice](root://user/${personId})!` }]);
+  const disabled = { enabled: false, destinationId: "welcome-channel", greeting: "Hello `{user}`!" };
+  assert.deepEqual(await welcome.save(disabled, owner), disabled);
+  assert.deepEqual((await welcome.loadEditor(owner)).configuration, disabled);
+});
+
+test("ordinary-text mentions preserve surrounding formatting and escape member backticks", async (t) => {
+  const { welcome, api, messages } = await setup(t);
+  api.communityMembers.get = async () => ({ nickname: "` **owned**", communityRoleIds: [] });
+  const greeting = "**Hello {user}!**\nRead [our guide](https://example.com).\n`literal code` and ||{user}||";
+  await welcome.save({ enabled: true, destinationId: "welcome-channel", greeting }, owner);
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, [{ channelId: "welcome-channel", content:
+    `**Hello [@\\\` \\*\\*owned\\*\\*](root://user/${personId})!**\nRead [our guide](https://example.com).\n\`literal code\` and ||[@\\\` \\*\\*owned\\*\\*](root://user/${personId})||`,
+  }]);
+});
+
+test("legacy enabled greetings with unsafe placeholder placement are logged and preserved without sending", async (t) => {
+  const { welcome, database, messages, failures } = await setup(t);
+  const legacy = { enabled: true, destinationId: "welcome-channel", greeting: "Hello `{user}`!" };
+  // Seed a configuration accepted by the previous application version.
+  await database.welcomeConfiguration.create({ data: { id: 1, ...legacy } });
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, []);
+  assert.equal(failures.length, 1);
+  assert.deepEqual((await welcome.loadEditor(owner)).configuration, legacy);
+  assert.deepEqual(await welcome.save({ ...legacy, enabled: false }, owner), { ...legacy, enabled: false });
+});
+
+test("ordinary placeholders beside encoded mention links and separated bare URLs still send", async (t) => {
+  const { welcome, messages } = await setup(t);
+  const greeting = "[x](root://user/welcome&#45;placeholder) www.example.com {user}";
+  await welcome.save({ enabled: true, destinationId: "welcome-channel", greeting }, owner);
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, [{ channelId: "welcome-channel", content:
+    `[x](root://user/welcome&#45;placeholder) www.example.com [@Alice](root://user/${personId})`,
+  }]);
+});

@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "@prisma/client": "6.19.3"
+    "@prisma/client": "6.19.3",
+    "markdown-it": "^15.0.2"
   },
   "devDependencies": {
     "prisma": "6.19.3"
