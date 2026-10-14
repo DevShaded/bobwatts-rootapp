@@ -59,6 +59,12 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 Issue both sub-agent calls together, in the foreground, and aggregate the reports they return.
 
+Start each reviewer with fresh context (`fork_turns: "none"`, or the host's
+equivalent). Supply the pinned baseline and diff command, commit list, spec,
+standards, and evidence requirements explicitly. Reviewers inspect the same
+revision independently; implementation history and previous review conclusions
+stay outside their prompts. Aggregate only after both reports arrive.
+
 Give both reviewers the evidence requirements below. For SDK implementation
 questions, follow [bounded SDK inspection](../../../docs/agents/sdk-inspection.md).
 

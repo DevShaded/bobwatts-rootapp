@@ -40,6 +40,7 @@ services:
       - "${DEV_BIND_ADDRESS:-127.0.0.1}:${CLIENT_PORT:-5174}:5173"
     volumes:
       - ./client/src:/app/client/src:ro
+      - ./server/src:/app/server/src:ro
 
 volumes:
   sqlite-data:

@@ -14,6 +14,7 @@ const { WelcomeError } = require("@bobwatts-rootapp/gen-shared");
 const { WellKnownRootGuids } = require("@rootsdk/server-app");
 const { ChannelType } = require("@rootsdk/server-app");
 const { RootApiException, ErrorCodeType } = require("@rootsdk/server-app");
+const placements = require("../../test/welcome-placement.json");
 
 const communityId = "community";
 const owner = { communityId, userId: "owner" };
@@ -45,6 +46,32 @@ async function setup(t) {
   return { welcome: new Welcome(database, communityId, api, { error: (...args) => failures.push(args) }), database, filename, api, messages, failures };
 }
 
+test("placement scenarios agree at enabled Save, disabled Save, and join delivery", async (t) => {
+  const { welcome, messages } = await setup(t);
+  for (const { name, greeting, mentions } of placements) {
+    const baseline = { enabled: true, destinationId: "welcome-channel", greeting: "Welcome aboard!" };
+    await welcome.save(baseline, owner);
+    const configuration = { ...baseline, greeting };
+    if (mentions === null) {
+      await assert.rejects(welcome.save(configuration, owner), { code: WelcomeError.INVALID_CONFIGURATION }, name);
+      assert.deepEqual((await welcome.loadEditor(owner)).configuration, baseline, name);
+      const disabled = { ...configuration, enabled: false };
+      assert.deepEqual(await welcome.save(disabled, owner), disabled, name);
+      assert.deepEqual((await welcome.loadEditor(owner)).configuration, disabled, name);
+    } else {
+      assert.deepEqual(await welcome.save(configuration, owner), configuration, name);
+    }
+    const countBeforeJoin = messages.length;
+    await welcome.handleJoin({ communityId, userId: personId });
+    assert.equal(messages.length - countBeforeJoin, mentions === null ? 0 : 1, name);
+    if (mentions !== null) {
+      const content = messages.at(-1).content;
+      assert.equal(content.split(`[@Alice](root://user/${personId})`).length - 1, mentions, name);
+      assert.equal(content.includes("{user}"), false, name);
+    }
+  }
+});
+
 test("an administrator opens the initial disabled welcome configuration", async (t) => {
   const { welcome } = await setup(t);
   assert.deepEqual(await welcome.loadEditor(owner), {
@@ -54,20 +81,39 @@ test("an administrator opens the initial disabled welcome configuration", async 
       greeting: "Welcome {user}! Glad you’re here.",
     },
     destinations: [{ id: "welcome-channel", name: "welcome" }],
+    previewMember: { userId: owner.userId, nickname: "Alice" },
   });
+});
+
+test("authorized editor loading supplies the caller's identity without posting or activating drafts", async (t) => {
+  const { welcome, api, messages } = await setup(t);
+  api.communityMembers.get = async ({ userId }) => ({
+    nickname: userId === owner.userId ? "Admin [name]*" : "Joining member", communityRoleIds: [],
+  });
+  const saved = { enabled: true, destinationId: "welcome-channel", greeting: "Welcome {user}!" };
+  await welcome.save(saved, owner);
+  const editor = await welcome.loadEditor(owner);
+  assert.deepEqual(editor.previewMember, { userId: owner.userId, nickname: "Admin [name]*" });
+  editor.configuration.greeting = "Unsaved preview for {user}";
+  assert.deepEqual(messages, []);
+  assert.deepEqual((await welcome.loadEditor(owner)).configuration, saved);
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, [{
+    channelId: "welcome-channel", content: `Welcome [@Joining member](root://user/${personId})!`,
+  }]);
 });
 
 test("a subsequent human join sends the saved greeting with every exact user placeholder mentioned", async (t) => {
   const { welcome, api, messages } = await setup(t);
   api.communityMembers.get = async () => ({ nickname: "A[li]ce\\*_<>\n&", communityRoleIds: [] });
-  const draft = { enabled: true, destinationId: "welcome-channel", greeting: "**Hello {user}!**\nVisit https://example.com, {user}. {User}" };
+  const draft = { enabled: true, destinationId: "welcome-channel", greeting: "**Hello {user}!**\nVisit https://example.com, {user}." };
   await welcome.save(draft, owner);
   draft.enabled = false;
   draft.greeting = "unsaved";
   await welcome.handleJoin({ communityId, userId: personId });
   assert.deepEqual(messages, [{
     channelId: "welcome-channel",
-    content: `**Hello [@A\\[li\\]ce\\\\\\*\\_&lt;&gt; &amp;](root://user/${personId})!**\nVisit https://example.com, [@A\\[li\\]ce\\\\\\*\\_&lt;&gt; &amp;](root://user/${personId}). {User}`,
+    content: `**Hello [@A\\[li\\]ce\\\\\\*\\_&lt;&gt; &amp;](root://user/${personId})!**\nVisit https://example.com, [@A\\[li\\]ce\\\\\\*\\_&lt;&gt; &amp;](root://user/${personId}).`,
   }]);
 });
 
@@ -235,4 +281,128 @@ test("disabling preserves saved fields and can save incomplete delivery fields",
   assert.deepEqual(await welcome.save({ ...enabled, enabled: false }, owner), { ...enabled, enabled: false });
   const incomplete = { enabled: false, destinationId: undefined, greeting: "" };
   assert.deepEqual(await welcome.save(incomplete, owner), incomplete);
+});
+
+test("enabled saves reject unsupported named placeholders without changing live settings", async (t) => {
+  const { welcome, messages } = await setup(t);
+  const saved = { enabled: true, destinationId: "welcome-channel", greeting: "Welcome aboard!" };
+  await welcome.save(saved, owner);
+  for (const greeting of ["Hello {username}", "Hello {User}", "Hello {user_name}"]) {
+    await assert.rejects(welcome.save({ ...saved, greeting }, owner), {
+      code: WelcomeError.INVALID_CONFIGURATION,
+      message: /Only \{user\} is supported/,
+    });
+    assert.deepEqual((await welcome.loadEditor(owner)).configuration, saved);
+  }
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, [{ channelId: "welcome-channel", content: "Welcome aboard!" }]);
+});
+
+test("the greeting limit counts Unicode code points and disabling retains over-limit content", async (t) => {
+  const { welcome, messages } = await setup(t);
+  for (const greeting of ["a".repeat(1000), "😀".repeat(1000), "a".repeat(998) + "😀!"]) {
+    const valid = { enabled: true, destinationId: "welcome-channel", greeting };
+    assert.deepEqual(await welcome.save(valid, owner), valid);
+    await welcome.handleJoin({ communityId, userId: personId });
+    assert.equal(messages.at(-1).content, greeting);
+    await assert.rejects(welcome.save({ ...valid, greeting: greeting + "😀" }, owner), {
+      code: WelcomeError.INVALID_CONFIGURATION, message: /1,000 characters/,
+    });
+    assert.deepEqual((await welcome.loadEditor(owner)).configuration, valid);
+  }
+  for (const greeting of ["", " \n\t ", "{username} {User}", "😀".repeat(1001)]) {
+    const disabled = { enabled: false, destinationId: "missing-channel", greeting };
+    assert.deepEqual(await welcome.save(disabled, owner), disabled);
+    assert.deepEqual((await welcome.loadEditor(owner)).configuration, disabled);
+    const before = messages.length;
+    await welcome.handleJoin({ communityId, userId: personId });
+    assert.equal(messages.length, before);
+  }
+});
+
+test("Root rejection after mention expansion is logged without retries or configuration changes", async (t) => {
+  const { welcome, api, failures } = await setup(t);
+  const saved = { enabled: true, destinationId: "welcome-channel", greeting: "{user}".repeat(166) };
+  api.communityMembers.get = async () => ({ nickname: "a".repeat(100), communityRoleIds: [] });
+  await welcome.save(saved, owner);
+  const attempts = [];
+  api.channelMessages.create = async (message) => {
+    attempts.push(message);
+    throw Object.assign(new RootApiException("Message content too long"), { errorCode: ErrorCodeType.RequestValidationFailed });
+  };
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.equal(attempts.length, 1);
+  assert.ok(attempts[0].content.length > 10000);
+  assert.equal(failures.length, 1);
+  assert.deepEqual((await welcome.loadEditor(owner)).configuration, saved);
+});
+
+test("enabled saves reject user placeholders in code or links while disabled drafts remain intact", async (t) => {
+  const { welcome, messages } = await setup(t);
+  const saved = { enabled: true, destinationId: "welcome-channel", greeting: "Welcome {user}!" };
+  await welcome.save(saved, owner);
+  for (const greeting of [
+    "Hello `{user}`!",
+    "```text\n{user}\n```",
+    "    {user}",
+    "[Hello {user}](https://example.com)",
+    "[Read more](https://example.com/{user})",
+    "[Hello {user}][guide]\n\n[guide]: https://example.com",
+    "![Hello {user}](https://example.com/image.png)",
+    "\\{user}",
+    "!{user}",
+    "[x](root://user/welcome&#45;placeholder) !{user}",
+    "www.example.com/{user}",
+    "www.example.com/[{user}]",
+    "www.example.com/**{user}**",
+    "www.example.invalid/{user}",
+    "www.example.test/{user}",
+    "www.localhost/{user}",
+    "www.localhost/**{user}**",
+    "www.example.invalid/&nbsp;{user}",
+    "www.localhost/&#32;{user}",
+  ]) {
+    await assert.rejects(welcome.save({ ...saved, greeting }, owner), {
+      code: WelcomeError.INVALID_CONFIGURATION, message: /Place \{user\} in ordinary greeting text/,
+    }, greeting);
+    assert.deepEqual((await welcome.loadEditor(owner)).configuration, saved);
+  }
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, [{ channelId: "welcome-channel", content: `Welcome [@Alice](root://user/${personId})!` }]);
+  const disabled = { enabled: false, destinationId: "welcome-channel", greeting: "Hello `{user}`!" };
+  assert.deepEqual(await welcome.save(disabled, owner), disabled);
+  assert.deepEqual((await welcome.loadEditor(owner)).configuration, disabled);
+});
+
+test("ordinary-text mentions preserve surrounding formatting and escape member backticks", async (t) => {
+  const { welcome, api, messages } = await setup(t);
+  api.communityMembers.get = async () => ({ nickname: "` **owned**", communityRoleIds: [] });
+  const greeting = "**Hello {user}!**\nRead [our guide](https://example.com).\n`literal code` and ||{user}||";
+  await welcome.save({ enabled: true, destinationId: "welcome-channel", greeting }, owner);
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, [{ channelId: "welcome-channel", content:
+    `**Hello [@\\\` \\*\\*owned\\*\\*](root://user/${personId})!**\nRead [our guide](https://example.com).\n\`literal code\` and ||[@\\\` \\*\\*owned\\*\\*](root://user/${personId})||`,
+  }]);
+});
+
+test("legacy enabled greetings with unsafe placeholder placement are logged and preserved without sending", async (t) => {
+  const { welcome, database, messages, failures } = await setup(t);
+  const legacy = { enabled: true, destinationId: "welcome-channel", greeting: "Hello `{user}`!" };
+  // Seed a configuration accepted by the previous application version.
+  await database.welcomeConfiguration.create({ data: { id: 1, ...legacy } });
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, []);
+  assert.equal(failures.length, 1);
+  assert.deepEqual((await welcome.loadEditor(owner)).configuration, legacy);
+  assert.deepEqual(await welcome.save({ ...legacy, enabled: false }, owner), { ...legacy, enabled: false });
+});
+
+test("ordinary placeholders beside encoded mention links and separated bare URLs still send", async (t) => {
+  const { welcome, messages } = await setup(t);
+  const greeting = "[x](root://user/welcome&#45;placeholder) www.example.com {user}";
+  await welcome.save({ enabled: true, destinationId: "welcome-channel", greeting }, owner);
+  await welcome.handleJoin({ communityId, userId: personId });
+  assert.deepEqual(messages, [{ channelId: "welcome-channel", content:
+    `[x](root://user/welcome&#45;placeholder) www.example.com [@Alice](root://user/${personId})`,
+  }]);
 });

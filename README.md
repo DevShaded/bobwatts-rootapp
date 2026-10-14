@@ -23,7 +23,7 @@ Open **http://localhost:5174**. Compose runs two services:
 - `client`: Vite with React Fast Refresh, exposed on port 5174.
 - `server`: Root DevHost and a TypeScript watcher. DevHost uses ports 8180–8182 for browser communication. Its internal gRPC port stays inside the container.
 
-Ports bind to localhost. Source edits under `client/src` and `server/src` reload automatically. A successful server compilation touches the entry point because DevHost watches that file only. Type errors leave the previous backend running.
+Ports bind to localhost. Source edits under `client/src` and `server/src` reload automatically. Both containers mount `server/src` read-only because the client imports shared greeting validation and rendering there. A successful server compilation touches the entry point because DevHost watches that file only. Type errors leave the previous backend running.
 
 Override `CLIENT_PORT`, `ROOT_DEV_WS_PORT`, `ROOT_DEV_HTTP_PORT`, or `ROOT_DEV_WS_UPDATE_PORT` in your shell if those ports are occupied. Compose passes the matching DevHost ports to the client automatically. For example: `CLIENT_PORT=5175 docker compose up`.
 
@@ -103,7 +103,8 @@ Without Docker, Vite defaults to port 5173 and DevHost to 8080–8082. If you cu
 [GitHub Actions](.github/workflows/build.yml) runs `npm ci`, Prisma validation, and `npm test`
 from a clean checkout on pull requests and pushes to `main`, using the Node
 version in `.nvmrc`. This generates networking and Prisma code, checks
-TypeScript, builds the client, validates Prisma, and runs SQLite integration tests.
+TypeScript, builds the client, validates Prisma, and runs SQLite integration tests,
+editor DOM regressions, and the Markdown component identity check.
 The workflow requires no Root development token.
 
 Optional local checks:
@@ -114,6 +115,21 @@ docker compose run --rm --no-deps server node --test server/test/*.test.cjs
 ```
 
 `npm test` regenerates networking and Prisma code, checks TypeScript, builds the client, and exercises welcome settings and joins against temporary SQLite and a fake Root API. It also verifies reconnect persistence and that first and repeated startup preserve Root-owned tables. The container command runs those tests with Alpine's native engine.
+
+The 40 placement scenarios in `test/welcome-placement.json` run against both
+Save/join delivery and the production editor's Markdown renderer. The client
+tests use jsdom and fake service calls, including a delayed Save response to
+verify that a focused spoiler retains its DOM node and focus. These tests do not
+establish native Root rendering behavior. Run `npm test --workspace=client` for
+the editor checks after generating networking bindings.
+
+`npm run check:markdown-components` inspects TypeScript ASTs under `client/src`
+for `react-markdown` renderer functions created inside another function. It
+follows local component aliases, renderer maps and member access, shorthand
+properties, JSX and object spreads, and conditional and logical fallback maps.
+Stable module renderers are allowed. CI runs this guard through
+`npm test`, catching renderer identity changes that remount preview content and
+lose keyboard focus.
 
 ## Welcome settings
 

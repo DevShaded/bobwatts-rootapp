@@ -140,6 +140,21 @@ h2 { margin: 0 0 var(--space-3); font-size: var(--text-sm); font-weight: 500; }
 .save-status:empty { display: none; }
 .error-message { color: var(--danger); }
 
+.greeting-preview { min-width: 0; padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.preview-content { margin-top: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-muted); overflow-wrap: anywhere; }
+.preview-content > :first-child { margin-top: 0; }
+.preview-content > :last-child { margin-bottom: 0; }
+.preview-content a { color: var(--foreground); text-decoration: underline; }
+.preview-content a:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.preview-content pre, .preview-content table { max-width: 100%; overflow-x: auto; }
+.preview-content pre { white-space: pre-wrap; }
+.preview-content table { display: block; }
+.preview-content blockquote { margin-inline: 0; padding-left: var(--space-3); border-left: 2px solid var(--border-strong); }
+.preview-mention { padding: 0 0.15em; border-radius: var(--radius-control); background: var(--surface); color: var(--foreground); }
+.preview-spoiler { border-radius: var(--radius-control); background: var(--surface); }
+.preview-spoiler:not(:hover):not(:focus-within) { filter: blur(4px); }
+.preview-spoiler:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+
 @media (max-width: 640px) {
   .app-layout {
     grid-template-columns: minmax(0, 1fr);
