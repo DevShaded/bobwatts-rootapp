@@ -14,6 +14,7 @@ const { WelcomeError } = require("@bobwatts-rootapp/gen-shared");
 const { WellKnownRootGuids } = require("@rootsdk/server-app");
 const { ChannelType } = require("@rootsdk/server-app");
 const { RootApiException, ErrorCodeType } = require("@rootsdk/server-app");
+const placements = require("../../test/welcome-placement.json");
 
 const communityId = "community";
 const owner = { communityId, userId: "owner" };
@@ -44,6 +45,32 @@ async function setup(t) {
   };
   return { welcome: new Welcome(database, communityId, api, { error: (...args) => failures.push(args) }), database, filename, api, messages, failures };
 }
+
+test("placement scenarios agree at enabled Save, disabled Save, and join delivery", async (t) => {
+  const { welcome, messages } = await setup(t);
+  for (const { name, greeting, mentions } of placements) {
+    const baseline = { enabled: true, destinationId: "welcome-channel", greeting: "Welcome aboard!" };
+    await welcome.save(baseline, owner);
+    const configuration = { ...baseline, greeting };
+    if (mentions === null) {
+      await assert.rejects(welcome.save(configuration, owner), { code: WelcomeError.INVALID_CONFIGURATION }, name);
+      assert.deepEqual((await welcome.loadEditor(owner)).configuration, baseline, name);
+      const disabled = { ...configuration, enabled: false };
+      assert.deepEqual(await welcome.save(disabled, owner), disabled, name);
+      assert.deepEqual((await welcome.loadEditor(owner)).configuration, disabled, name);
+    } else {
+      assert.deepEqual(await welcome.save(configuration, owner), configuration, name);
+    }
+    const countBeforeJoin = messages.length;
+    await welcome.handleJoin({ communityId, userId: personId });
+    assert.equal(messages.length - countBeforeJoin, mentions === null ? 0 : 1, name);
+    if (mentions !== null) {
+      const content = messages.at(-1).content;
+      assert.equal(content.split(`[@Alice](root://user/${personId})`).length - 1, mentions, name);
+      assert.equal(content.includes("{user}"), false, name);
+    }
+  }
+});
 
 test("an administrator opens the initial disabled welcome configuration", async (t) => {
   const { welcome } = await setup(t);

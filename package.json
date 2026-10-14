@@ -23,7 +23,8 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "clean": "node clean.js",
-    "test": "npm run build && node --test server/test/*.test.cjs"
+    "check:markdown-components": "node scripts/check-markdown-components.cjs",
+    "test": "npm run check:markdown-components && node --test scripts/test/*.test.cjs && npm run build && node --test server/test/*.test.cjs && npm test --workspace=client"
   },
   "workspaces": {
     "packages": [

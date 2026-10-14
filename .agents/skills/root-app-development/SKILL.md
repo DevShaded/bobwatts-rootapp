@@ -53,6 +53,14 @@ Treat the generated files and scripts as authoritative for that project.
 
 ## Troubleshooting
 
+For dependency changes, inspect the package's installed `package.json` exports,
+entry points, and bundled declarations before choosing imports or adding
+`@types` packages. Use separate types only when the package lacks usable types.
+After installation, run the networking workspace's Protobuf generation script
+before rebuilding Docker or running the full build. Continue only when generation
+succeeds and the generated service bindings typecheck against the installed
+dependencies; resolve import or declaration conflicts at this stage.
+
 Find the first failing stage:
 
 1. Package installation.
