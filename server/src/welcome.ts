@@ -23,10 +23,14 @@ export class Welcome {
 
   async loadEditor(client: Client) {
     await this.requireAdministrator(client);
-    const member = await this.api.communityMembers.get({ userId: client.userId });
+    const [member, configuration, destinations] = await Promise.all([
+      this.api.communityMembers.get({ userId: client.userId }),
+      this.configuration(),
+      this.destinations(),
+    ]);
     return {
-      configuration: await this.configuration(),
-      destinations: await this.destinations(),
+      configuration,
+      destinations,
       previewMember: { userId: client.userId, nickname: member.nickname },
     };
   }
